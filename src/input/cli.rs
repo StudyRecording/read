@@ -15,7 +15,7 @@ pub struct Cli {
 
     /// 每页显示行数
     #[arg(short, long, default_value = "1")]
-    pub num: usize,
+    pub num: u16,
 
     /// 是否自动阅读
     #[arg(short, long)]
@@ -27,34 +27,6 @@ pub struct Cli {
 
 
 }
-//
-// impl Cli {
-//
-//     /// 获取文件路径
-//     pub fn get_file(&self) -> &str {
-//         &self.file
-//     }
-//
-//     /// 获取每页显示行数
-//     pub fn get_num(&self) -> &usize {
-//         &self.num
-//     }
-//
-//     /// 获取开始显示时所在行数
-//     pub fn get_start(&self) -> &usize {
-//         &self.start
-//     }
-//
-//     /// 获取自动阅读参数
-//     pub fn get_auto(&self) -> &bool {
-//         &self.auto
-//     }
-//
-//     /// 获取自动阅读时每页停顿时间(秒)
-//     pub fn get_time(&self) -> &u64 {
-//         &self.time
-//     }
-// }
 
 /// 读取命令参数
 pub fn read() -> Cli {

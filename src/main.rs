@@ -1,8 +1,6 @@
 use std::sync::mpsc;
 use std::thread;
-use crate::input::cli;
-
-
+use crate::input::{cli, event};
 
 mod input;
 mod context;
@@ -21,8 +19,7 @@ fn main() {
     });
 
     // 负责按键事件监听
-    context::keys_listener(tx, read_show_file);
+    event::keys_listener(tx, read_show_file);
 
-    // read_show_file.join().expect("按键监听线程join失败");
 
 }
