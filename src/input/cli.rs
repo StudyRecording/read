@@ -11,7 +11,7 @@ pub struct Cli {
 
     /// 开始显示所在行数
     #[arg(short, long, default_value = "1")]
-    pub start: usize,
+    pub start: u64,
 
     /// 每页显示行数
     #[arg(short, long, default_value = "1")]
@@ -28,7 +28,28 @@ pub struct Cli {
 
 }
 
-/// 读取命令参数
+/// 读取并验证命令参数
 pub fn read() -> Cli {
-    Cli::parse()
+    let cli = Cli::parse();
+    if cli.num <= 0 {
+        panic!("每页行数不能小于1");
+    }
+    if cli.start <= 0 {
+        panic!("开始行数不能小于1");
+    }
+    if cli.time <= 0 {
+        panic!("自动阅读刷新时间不能小于1s");
+    }
+    if String::is_empty(&cli.file) {
+        panic!("文件路径错误");
+    }
+    // 验证文件格式
+    let extend_name = cli.file.split(".")
+        .last()
+        .expect("不能正常获取文件扩展名");
+    if extend_name != "txt" {
+        panic!("非txt文件, 不可处理");
+    }
+
+    cli
 }

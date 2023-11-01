@@ -31,7 +31,7 @@ pub enum KeyEvent {
 pub fn read_event() -> KeyEvent {
     // 在500ms内获取输入，成功则为true，未获取则为false
     let poll = match poll(Duration::from_millis(500)) {
-        Ok(_) => true,
+        Ok(status) => status,
         Err(_) => false,
     };
     if poll {
@@ -76,22 +76,22 @@ fn get_key_event() -> KeyEvent {
 pub fn keys_listener(tx: Sender<KeyEvent>, show_thread: JoinHandle<()>) {
     enable_raw_mode().expect("开启终端raw mode模式失败");
     loop {
+        // show线程结束，按键监听线程也直接跳出循环结束线程
+        if show_thread.is_finished() {
+            break;
+        }
         let ke = event::read_event();
+        if ke == KeyEvent::Other {
+            // 如果是该事件，则是无效按键，继续循环监听其他按键
+            continue;
+        }
         // println!("监听按键:{:?}", ke);
         if !show_thread.is_finished() {
             tx.send(ke.clone()).expect("发送键盘监听事件失败");
-        } else {
-            // 如果显示线程结束，则按键监听同样结束，整个程序资源回收，结束
-            break;
         }
         if ke == KeyEvent::ESC {
             break;
         }
-        // if ke != KeyEvent::Other {
-        //     // println!("按键:{:?}", ke);
-        //     // print!("\x1b[G"); // 光标移到第一列
-        //
-        // }
     }
     disable_raw_mode().expect("关闭终端raw mode模式失败");
 }
