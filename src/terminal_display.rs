@@ -1,11 +1,13 @@
+use std::cell::RefCell;
 use std::io::{BufWriter, Stdout, stdout};
+use std::rc::Rc;
 use std::sync::mpsc::{Receiver};
 use std::thread::sleep;
 use std::time::Duration;
 use crossterm::cursor::{MoveTo, MoveToColumn, MoveUp};
 use crossterm::{ExecutableCommand, execute};
 use crossterm::style::{Color, Print, SetBackgroundColor};
-use crossterm::terminal::{Clear, ClearType};
+use crossterm::terminal::{Clear, ClearType, size};
 use crate::file_read::FileRead;
 use crate::input::cli::Cli;
 use crate::input::event::KeyEvent;
@@ -16,11 +18,13 @@ fn move_to_leftmost_column(out: &mut BufWriter<Stdout>) {
 }
 
 /// 清除一页
-fn clear_page(out: &mut BufWriter<Stdout>, line_num: &u16) {
+fn clear_page(out: &mut BufWriter<Stdout>, write_rows: u16) {
     // 光标移动到最左列
     move_to_leftmost_column(out);
-    // 上移line_num行
-    out.execute(MoveUp(*line_num)).expect("光标上移失败");
+    // // 上移line_num行
+    if write_rows > 0 {
+        out.execute(MoveUp(write_rows)).expect("光标上移失败");
+    }
     // 擦除光标到屏幕末尾位置
     out.execute(Clear(ClearType::FromCursorDown)).expect("擦除光标到屏幕末尾位置操作失败");
 }
@@ -35,6 +39,63 @@ fn write_line(out: &mut BufWriter<Stdout>, line: String, color: Color) {
     move_to_leftmost_column(out);
     // 输出
     execute!(out, SetBackgroundColor(color), Print(line), Print("\r\n")).expect("输出到终端失败");
+}
+
+/// 中文字符串获取完整字符索引
+fn fix_index(s: &String, index: usize) -> usize {
+    if index >= s.len() - 1 {
+        s.len() - 1
+    } else {
+        let mut  result = index;
+        loop {
+            if s.is_char_boundary(result) {
+                result = result - 1;
+                break;
+            } else {
+                result = result + 1;
+            }
+        }
+        result
+    }
+}
+
+/// 输出一页
+fn write_page(out: &mut BufWriter<Stdout>, page: Rc<RefCell<Vec<String>>>, width: &u16) -> u16 {
+
+    // 留点余地
+    let show_with = width - 8;
+
+    // 移到最左列
+    move_to_leftmost_column(out);
+    // let (x, y) = crossterm::cursor::position().expect("获取位置失效");
+
+    let mut row_total = 0;
+    for line in page.borrow().iter() {
+       // 长度为0，直接跳过
+        if line.len() == 0 {
+           continue;
+       }
+        let rows = line.len() / (show_with as usize) + 1;
+
+        let mut start_index = 0;
+        let mut end_index = show_with as usize;
+        for i in 0..rows  {
+
+            end_index = fix_index(line, end_index);
+
+
+            let show_str = &line[start_index..=end_index];
+            write_line(out, show_str.to_string(), Color::Reset);
+
+            start_index = end_index + 1;
+            end_index = start_index + show_with as usize;
+        }
+        row_total += rows;
+    }
+
+    row_total as u16
+
+    // change_cursor_position(out, x, y);
 }
 
 /// 输出一行文字，但不换行
@@ -72,7 +133,7 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     // 获取输出流
     let out = stdout();
     let mut out = BufWriter::new(out);
-    let msg = String::from("操作按键:【n | ↓】下一页  【p | ↑】上一页  【a】自动翻页  【Esc | e】退出程序, Tips: ");
+    let msg = String::from("操作按键:【n | ↓】下一页  【p | ↑】上一页  【a】自动翻页 【s】停止自动翻页 【Esc | e】退出程序, Tips: ");
     write(&mut out, msg, Color::Reset);
     let (x, y) = crossterm::cursor::position().expect("获取点位失败");
     write_tip(&mut out, x, y,"hpc制作!!!".to_string(), Color::Red);
@@ -81,14 +142,19 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     // 初始化FileRead
     let mut fr = FileRead::new(start_line, file_path, line_num);
 
+    // 获取终端宽度
+    let (width, _) = size().expect("获取终端尺寸失败");
+
     // 不是最后一页就一直循环
     while !fr.is_end() {
         
+
+        // let current_page = fr.get_current_page();
+        // for line in current_page.borrow().iter() {
+        //     write_line(&mut out, line.to_string(), Color::Reset);
+        // }
         // 获取当前页并打印
-        let current_page = fr.get_current_page();
-        for line in current_page.borrow().iter() {
-            write_line(&mut out, line.to_string(), Color::Reset);
-        }
+        let write_rows = write_page(&mut out, fr.get_current_page(), &width);
 
         // 自动阅读
         if *auto {
@@ -113,7 +179,7 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
         }
 
         // 清屏
-        clear_page(&mut out, line_num);
+        clear_page(&mut out, write_rows);
     }
 
     write_line(&mut out, "end......".to_string(), Color::Reset);
