@@ -1,7 +1,7 @@
 use std::sync::mpsc::Sender;
 use std::thread::JoinHandle;
 use std::time::Duration;
-use crossterm::event::{Event, KeyCode, poll, read};
+use crossterm::event::{Event, KeyCode, KeyEventKind, poll, read};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use crate::input::event;
 
@@ -48,6 +48,11 @@ fn get_key_event() -> KeyEvent {
         Err(_) => Event::FocusGained,
     };
     // 匹配事件
+    match_event_key(event_key)
+}
+
+#[cfg(not(target_os = "windows"))]
+fn match_event_key(event_key: Event) -> KeyEvent {
     match event_key {
         Event::FocusGained => KeyEvent::Other,
         Event::FocusLost => KeyEvent::Other,
@@ -65,6 +70,34 @@ fn get_key_event() -> KeyEvent {
             } else {
                 KeyEvent::Other
             }
+        }
+        Event::Mouse(_) => KeyEvent::Other,
+        Event::Paste(_) => KeyEvent::Other,
+        Event::Resize(_, _) => KeyEvent::Other,
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn match_event_key(event_key: Event) -> KeyEvent {
+    match event_key {
+        Event::FocusGained => KeyEvent::Other,
+        Event::FocusLost => KeyEvent::Other,
+        Event::Key(key) => {
+            if key.kind == KeyEventKind::Release {
+                if key.code == KeyCode::Char('n') || key.code == KeyCode::Down {
+                    return KeyEvent::NextPage
+                } else if key.code == KeyCode::Char('p') || key.code == KeyCode::Up {
+                    return KeyEvent::PreviousPage
+                } else if key.code == KeyCode::Char('a') {
+                    return KeyEvent::AutoRead
+                } else if key.code == KeyCode::Char('s') {
+                    return KeyEvent::StopAuto
+                } else if key.code == KeyCode::Esc || key.code == KeyCode::Char('e') {
+                    return KeyEvent::ESC
+                }
+            }
+            KeyEvent::Other
+
         }
         Event::Mouse(_) => KeyEvent::Other,
         Event::Paste(_) => KeyEvent::Other,
