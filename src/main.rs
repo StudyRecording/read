@@ -5,7 +5,7 @@ use crate::input::{cli, event};
 mod input;
 
 mod file_read;
-mod terminal_display;
+mod display;
 
 fn main() {
     // 获取命令参数
@@ -17,7 +17,7 @@ fn main() {
     // 单开子线程
     let read_show_file = thread::spawn(move || {
         // 阅读文件
-        terminal_display::display(args, rx);
+        display::terminal_display::display(args, rx);
     });
 
     // 负责按键事件监听
