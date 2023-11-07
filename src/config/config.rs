@@ -34,7 +34,7 @@ impl Config {
         let file = get_or_create_config_dir();
         let reader = BufReader::new(file);
         let mut content: Vec<Config> = serde_json::from_reader(reader).expect("读取文件内容，反序列化失败");
-    
+
         // 默认不存在配置
         let mut exist_config = false;
 
@@ -66,17 +66,25 @@ impl Config {
 
 /// 获取用户配置目录
 pub fn get_or_create_config_dir() -> File {
-    let mut config_dir = dirs::config_dir().expect("获取配置目录失败");
-    
-    config_dir.push("/read/config.json");
+    let mut home_dir = dirs::home_dir().expect("获取配置目录失败");
 
-    let metadata = fs::metadata(config_dir.clone());
+    // config_dir.push("read/");
 
+    // // 如果没有read目录，则创建目录
+    // let metadata = fs::metadata(config_dir.clone());
+    // if metadata.is_err() || metadata.unwrap().is_file() {
+    //     // 如果不存在或者是文件
+    //     File::create(config_dir.clone()).expect("创建read目录失败");
+    // }
+
+    // 获取文件
+    home_dir.push(".read/config.json");
+    let metadata = fs::metadata(home_dir.clone());
     if metadata.is_ok() && metadata.unwrap().is_file() {
         // 存在，且是file，直接获取文件句柄
-        return File::open(config_dir).expect("获取配置文件失败")
+        return File::open(home_dir).expect("获取配置文件失败")
     } else {
         // 创建
-        return File::create(config_dir).expect("创建配置文件失败")
+        return File::create(home_dir).expect("创建配置文件失败")
     }
 }
