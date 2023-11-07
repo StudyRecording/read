@@ -63,7 +63,7 @@ fn fix_index(s: &String, index: usize) -> usize {
 fn write_page(out: &mut BufWriter<Stdout>, page: Rc<RefCell<Vec<String>>>, width: &u16) -> u16 {
 
     // 留点余地
-    let show_with = width - 8;
+    let show_with = width;
 
     // 移到最左列
     move_to_leftmost_column(out);
@@ -75,10 +75,10 @@ fn write_page(out: &mut BufWriter<Stdout>, page: Rc<RefCell<Vec<String>>>, width
         if line.len() == 0 {
            continue;
        }
-        let rows = line.len() / (show_with as usize) + 1;
+        let rows = line.len() / (*show_with as usize) + 1;
 
         let mut start_index = 0;
-        let mut end_index = show_with as usize;
+        let mut end_index = *show_with as usize;
         for i in 0..rows  {
 
             end_index = fix_index(line, end_index);
@@ -88,7 +88,7 @@ fn write_page(out: &mut BufWriter<Stdout>, page: Rc<RefCell<Vec<String>>>, width
             write_line(out, show_str.to_string(), Color::Reset);
 
             start_index = end_index + 1;
-            end_index = start_index + show_with as usize;
+            end_index = start_index + *show_with as usize;
         }
         row_total += rows;
     }
