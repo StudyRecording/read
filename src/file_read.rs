@@ -3,6 +3,9 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::rc::Rc;
 
+use crate::config::config::Config;
+use crate::input::cli;
+
 /// 封装了文件阅读操作的结构体
 #[warn(dead_code)]
 pub struct FileRead {
@@ -29,6 +32,9 @@ pub struct FileRead {
 
     /// 结束
     end: bool,
+
+    /// 获取配置信息
+    config: Rc<RefCell<Config>>,
 }
 
 impl FileRead {
@@ -38,7 +44,7 @@ impl FileRead {
     /// - start_line: 起始行数
     /// - file_path: 文件路径
     /// - line_num: 每页显示行数
-    pub fn new(start_line: &u64, file_path: &String, line_num: &u16) -> FileRead {
+    pub fn new(start_line: &u64, file_path: &String, line_num: &u16, conf: Rc<RefCell<Config>>) -> FileRead {
 
         // 打开文件并读取
         let file = File::open(file_path)
@@ -84,6 +90,9 @@ impl FileRead {
             }
         }
 
+        let ref_conf = conf.borrow_mut();
+        ref_conf.update_config(current_line_no);
+
         FileRead {
             current_line_no, // 为防止仅有一页的内容，因此初始化为0
             total_line,
@@ -93,6 +102,7 @@ impl FileRead {
             msg: String::from(""),
             start: false,
             end: false,
+            config: conf.clone()
         }
     }
 
@@ -135,6 +145,10 @@ impl FileRead {
 
         // 清空提示信息
         self.msg = String::from("");
+
+        // 更新配置信息
+        let ref_conf = self.config.borrow_mut();
+        ref_conf.update_config(self.current_line_no);
     }
 
     /// 上一页
@@ -168,6 +182,10 @@ impl FileRead {
             // 修改当前行
             self.current_line_no = index + 1;
         }
+
+        // 更新配置信息
+        let ref_conf = self.config.borrow_mut();
+        ref_conf.update_config(self.current_line_no);
     }
 
     /// 判断是否结尾

@@ -8,6 +8,7 @@ use crossterm::cursor::{MoveTo, MoveToColumn, MoveUp};
 use crossterm::{ExecutableCommand, execute};
 use crossterm::style::{Color, Print, SetBackgroundColor};
 use crossterm::terminal::{Clear, ClearType, size};
+use crate::config::config::Config;
 use crate::file_read::FileRead;
 use crate::input::cli::Cli;
 use crate::input::event::KeyEvent;
@@ -139,8 +140,10 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     write_tip(&mut out, x, y,"hpc制作!!!".to_string(), Color::Red);
 
 
+    // 初始化配置
+    let mut config = Config::new(&args, 0);
     // 初始化FileRead
-    let mut fr = FileRead::new(start_line, file_path, line_num);
+    let mut fr = FileRead::new(start_line, file_path, line_num, Rc::new(RefCell::new(config)));
 
     // 获取终端宽度
     let (width, _) = size().expect("获取终端尺寸失败");
