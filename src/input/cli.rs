@@ -1,7 +1,8 @@
 use clap::Parser;
+use serde::{Serialize, Deserialize};
 
 /// 一个简单的clap命令行参数读取
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone, Serialize, Deserialize)]
 #[command(name = "Read", author = "hpc", version = "0.1", about = "txt阅读器", long_about = None)]
 pub struct Cli {
 

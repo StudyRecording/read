@@ -3,7 +3,7 @@ use std::thread;
 use crate::input::{cli, event};
 
 mod input;
-
+mod config;
 mod file_read;
 mod display;
 

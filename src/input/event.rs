@@ -1,7 +1,7 @@
 use std::sync::mpsc::Sender;
 use std::thread::JoinHandle;
 use std::time::Duration;
-use crossterm::event::{Event, KeyCode, KeyEventKind, poll, read};
+use crossterm::event::{Event, KeyCode, poll, read};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use crate::input::event;
 

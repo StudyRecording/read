@@ -15,8 +15,8 @@ pub struct FileRead {
     /// 当前页数据
     current_page: Rc<RefCell<Vec<String>>>,
 
-    /// 文件路径
-    file_path: String,
+    // /// 文件路径
+    // file_path: String,
 
     /// 文件读取数据
     content: Box<Vec<String>>,
@@ -88,7 +88,7 @@ impl FileRead {
             current_line_no, // 为防止仅有一页的内容，因此初始化为0
             total_line,
             current_page: Rc::new(RefCell::new(page_content)),
-            file_path: file_path.clone(),
+            // file_path: file_path.clone(),
             content,
             msg: String::from(""),
             start: false,
