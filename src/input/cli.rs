@@ -15,7 +15,7 @@ pub struct Cli {
 
     /// 开始显示所在行数, 存在-f参数时，默认为1，不存在-f时，从配置文件中读取
     #[arg(short, long)]
-    #[serde(default)]
+    #[serde(skip)]
     pub start: Option<u64>,
 
     /// 每页显示行数

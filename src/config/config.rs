@@ -10,7 +10,6 @@ use crate::input::cli::Cli;
 pub struct Config {
 
     /// 命令参数
-    #[serde(flatten)]
     cli: Cli,
 
     /// txt文件路径

@@ -20,8 +20,8 @@
                 }
             },
             "args": [
-                "-f",
-                "/Users/hpc/Book/修真聊天群.txt"
+                "-s",
+                "1",
             ],
             "cwd": "${workspaceFolder}"
         },
