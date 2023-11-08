@@ -19,7 +19,10 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "-f",
+                "/Users/hpc/Book/修真聊天群.txt"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {
