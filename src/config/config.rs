@@ -80,8 +80,9 @@ impl Config {
         }        
 
         // 序列化到文件中
-        let file = get_or_create_config_dir();
+        let file = get_or_create_config_dir(false);
         let writer = BufWriter::new(file);
+        
         serde_json::to_writer(writer, &content).expect("写入配置文件内容失败");
     }
 
@@ -102,7 +103,9 @@ impl Config {
 }
 
 /// 获取用户配置目录
-pub fn get_or_create_config_dir() -> File {
+/// # Args
+/// - read 读取文件:true, 写入文件：false
+pub fn get_or_create_config_dir(read: bool) -> File {
     let mut home_dir = dirs::home_dir().expect("获取配置目录失败");
 
     home_dir.push(".read/");
@@ -119,15 +122,15 @@ pub fn get_or_create_config_dir() -> File {
     OpenOptions::new()
             .write(true)
             .create(true)
-            // .truncate(true)
-            .read(true)
+            .truncate(!read)
+            .read(read)
             .open(home_dir)
             .expect("创建配置文件失败")
 }
 
 /// 获取配置通过文件
 fn get_config_by_file() -> Vec<Config> {
-    let file = get_or_create_config_dir();
+    let file = get_or_create_config_dir(true);
     let mut reader = BufReader::new(file);
     let mut contents = String::new();
     reader.read_to_string(&mut contents).expect("文件读取失败");
