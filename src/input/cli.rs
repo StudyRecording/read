@@ -1,3 +1,5 @@
+use std::{path::PathBuf, fs};
+
 use clap::Parser;
 use serde::{Serialize, Deserialize};
 
@@ -8,11 +10,11 @@ pub struct Cli {
 
     /// txt文件路径
     #[arg(short, long)]
-    pub file: String,
+    pub file: Option<String>,
 
-    /// 开始显示所在行数
-    #[arg(short, long, default_value = "1")]
-    pub start: u64,
+    /// 开始显示所在行数, 存在-f参数时，默认为1，不存在-f时，从配置文件中读取
+    #[arg(short, long)]
+    pub start: Option<u64>,
 
     /// 每页显示行数
     #[arg(short, long, default_value = "1")]
@@ -31,25 +33,31 @@ pub struct Cli {
 
 /// 读取并验证命令参数
 pub fn read() -> Cli {
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
     if cli.num <= 0 {
         panic!("每页行数不能小于1");
-    }
-    if cli.start <= 0 {
-        panic!("开始行数不能小于1");
     }
     if cli.time <= 0 {
         panic!("自动阅读刷新时间不能小于1s");
     }
-    if String::is_empty(&cli.file) {
-        panic!("文件路径错误");
-    }
-    // 验证文件格式
-    let extend_name = cli.file.split(".")
-        .last()
-        .expect("不能正常获取文件扩展名");
-    if extend_name != "txt" {
-        panic!("非txt文件, 不可处理");
+    if cli.file.is_some() {
+
+        let file_path = cli.file.unwrap();
+
+        let extend_name = file_path.split(".")
+            .last()
+            .expect("不能正常获取文件扩展名");
+        if extend_name != "txt" {
+            panic!("非txt文件, 不可处理");
+        }
+
+        // 转换为绝对路径
+        let file_path = file_path.to_string();
+        let path = PathBuf::from(file_path);
+        let absolute_path = fs::canonicalize(&path).expect("txt文件转化绝对路径失败")
+                                        .into_os_string().into_string().expect("txt文件转化绝对路径失败");
+        cli.file = Option::Some(absolute_path);
+        
     }
 
     cli

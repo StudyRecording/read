@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::io::{BufWriter, Stdout, stdout};
 use std::rc::Rc;
-use std::sync::mpsc::{Receiver};
+use std::sync::mpsc::Receiver;
 use std::thread::sleep;
 use std::time::Duration;
 use crossterm::cursor::{MoveTo, MoveToColumn, MoveUp};
@@ -80,7 +80,7 @@ fn write_page(out: &mut BufWriter<Stdout>, page: Rc<RefCell<Vec<String>>>, width
 
         let mut start_index = 0;
         let mut end_index = *show_with as usize;
-        for i in 0..rows  {
+        for _i in 0..rows  {
 
             end_index = fix_index(line, end_index);
 
@@ -115,21 +115,21 @@ fn write_tip(out: &mut BufWriter<Stdout>, x: u16, y: u16, line: String, color: C
     execute!(out, SetBackgroundColor(Color::Reset), Print("\r\n")).expect("换行失败");
 }
 
-/// 切换光标位置
-fn change_cursor_position(out: &mut BufWriter<Stdout>, x: u16, y: u16) {
-    execute!(out, MoveTo(x, y)).expect("切换光标位置失败");
-}
-
-
 /// 显示，主要函数
 pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
-    // 读取参数
-    let line_num = &args.num;
-    let start_line = &args.start;
+    
     let file_path = &args.file;
-    let mut auto = &args.auto;
-    let time = &args.time;
-    // println!("请求参数: {:?}", &args);
+    // 初始化配置
+    let config = Config::new(&args, file_path.clone());
+    let rc_config = Rc::new(RefCell::new(config));
+    let conf = rc_config.borrow();
+
+    // 获取参数
+    let line_num = conf.get_cli().num;
+    let mut auto = conf.get_cli().auto;
+    let time = conf.get_cli().time;
+    // 移除不可变借用，防止在FileRead中使用可变借用
+    drop(conf);
 
     // 获取输出流
     let out = stdout();
@@ -140,10 +140,8 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     write_tip(&mut out, x, y,"hpc制作!!!".to_string(), Color::Red);
 
 
-    // 初始化配置
-    let mut config = Config::new(&args, 0);
     // 初始化FileRead
-    let mut fr = FileRead::new(start_line, file_path, line_num, Rc::new(RefCell::new(config)));
+    let mut fr = FileRead::new(rc_config.clone());
 
     // 获取终端宽度
     let (width, _) = size().expect("获取终端尺寸失败");
@@ -151,30 +149,25 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     // 不是最后一页就一直循环
     while !fr.is_end() {
         
-
-        // let current_page = fr.get_current_page();
-        // for line in current_page.borrow().iter() {
-        //     write_line(&mut out, line.to_string(), Color::Reset);
-        // }
         // 获取当前页并打印
         let write_rows = write_page(&mut out, fr.get_current_page(), &width);
 
         // 自动阅读
-        if *auto {
+        if auto {
             // 如果自动阅读，则停顿一下
-            auto_read_sleep(&mut auto, time);
+            auto_read_sleep(&mut auto, &time);
             // 自动阅读时，无论是否接收到按键指令，都自动进行到下一行
-            fr.next_page(line_num);
+            fr.next_page(&line_num);
         }
 
         // 获取按键事件
-        let key = get_key(auto, &rx);
+        let key = get_key(&auto, &rx);
         // 匹配到有效键，则直接跳出监听循环
         match key {
-            KeyEvent::NextPage => { fr.next_page(line_num) }
-            KeyEvent::PreviousPage => { fr.pre_page(line_num) }
-            KeyEvent::AutoRead => { auto = &true }
-            KeyEvent::StopAuto => { auto = &false }
+            KeyEvent::NextPage => { fr.next_page(&line_num) }
+            KeyEvent::PreviousPage => { fr.pre_page(&line_num) }
+            KeyEvent::AutoRead => { auto = true }
+            KeyEvent::StopAuto => { auto = false }
             KeyEvent::ESC => {
                 break;
             }

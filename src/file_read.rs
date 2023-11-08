@@ -4,7 +4,7 @@ use std::io::{BufRead, BufReader};
 use std::rc::Rc;
 
 use crate::config::config::Config;
-use crate::input::cli;
+
 
 /// 封装了文件阅读操作的结构体
 #[warn(dead_code)]
@@ -41,10 +41,13 @@ impl FileRead {
 
     /// 初始化FileRead
     /// # Arguments
-    /// - start_line: 起始行数
-    /// - file_path: 文件路径
-    /// - line_num: 每页显示行数
-    pub fn new(start_line: &u64, file_path: &String, line_num: &u16, conf: Rc<RefCell<Config>>) -> FileRead {
+    /// - conf 配置文件
+    pub fn new(conf: Rc<RefCell<Config>>) -> FileRead {
+        // start_line: &u64, file_path: &str, line_num: &u16, 
+        let mut ref_conf = conf.borrow_mut();
+        let start_line = ref_conf.get_current_no();
+        let file_path = ref_conf.get_file_path();
+        let line_num = &ref_conf.get_cli().num;
 
         // 打开文件并读取
         let file = File::open(file_path)
@@ -89,8 +92,8 @@ impl FileRead {
                 break;
             }
         }
-
-        let mut ref_conf = conf.borrow_mut();
+        
+        // 更新配置
         ref_conf.update_config(current_line_no);
 
         FileRead {
@@ -196,10 +199,5 @@ impl FileRead {
     /// 获取当前页内容
     pub fn get_current_page(&self) -> Rc<RefCell<Vec<String>>> {
         self.current_page.clone()
-    }
-
-    /// 获取提示信息
-    pub fn get_tip(&self) -> &str {
-        &self.msg
     }
 }
