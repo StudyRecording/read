@@ -25,24 +25,45 @@ impl Config {
     pub fn new(cli: &Cli, file_path: Option<String>) -> Config {
         let cli = cli.clone();
 
+
+        // file_path为空，则从配置文件中获取, 并进行参数校验
+        let mut content = get_config_by_file();
+        if content.is_empty() && file_path.is_none() {
+            panic!("未找到txt文件, 请传参[-f <FILE>]");
+        }
+
         // file_path不为空，获取绝对路径
         if file_path.is_some() {
             let absolute_path = file_path.unwrap();
             // 手动保证命令行的start为1
+            let mut cli_start = false;
             let current_line_no = match cli.start {
-                Some(no) => no,
+                Some(no) => {
+                    cli_start = true;
+                    no
+                },
                 None => 1,
             };
-            return Config { cli, file_path: absolute_path, current_line_no, };
+
+            // 查找绝对路径相同的配置
+            let conf = content.iter().find(|item| item.file_path == absolute_path);
+            if conf.is_none() {
+                // 如果未找到，直接创建新conf对象并返回
+                return Config { cli, file_path: absolute_path, current_line_no, };
+            } else {
+                // 找到conf配置类
+                let mut c = conf.unwrap().clone();
+                if cli_start {
+                    // 仅当用户传入开始行号，才修改当前行号
+                    c.current_line_no = current_line_no;
+                }
+                // 更新命令
+                c.cli.auto = cli.auto;
+                return c;
+            }
         }
         
-        // file_path为空，则从配置文件中获取
-        let mut content = get_config_by_file();
-        if content.is_empty() {
-            panic!("未找到txt文件, 请传参[-f <FILE>]");
-        }
         let mut config = content.pop().unwrap();
-         
         // 如果命令参数中传入了开始行参数，则按照命令参数中为主
         if cli.start.is_some() {
             config.current_line_no = cli.start.unwrap();
