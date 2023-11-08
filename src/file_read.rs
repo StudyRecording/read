@@ -90,7 +90,7 @@ impl FileRead {
             }
         }
 
-        let ref_conf = conf.borrow_mut();
+        let mut ref_conf = conf.borrow_mut();
         ref_conf.update_config(current_line_no);
 
         FileRead {
@@ -147,7 +147,7 @@ impl FileRead {
         self.msg = String::from("");
 
         // 更新配置信息
-        let ref_conf = self.config.borrow_mut();
+        let mut ref_conf = self.config.borrow_mut();
         ref_conf.update_config(self.current_line_no);
     }
 
@@ -184,7 +184,7 @@ impl FileRead {
         }
 
         // 更新配置信息
-        let ref_conf = self.config.borrow_mut();
+        let mut ref_conf = self.config.borrow_mut();
         ref_conf.update_config(self.current_line_no);
     }
 

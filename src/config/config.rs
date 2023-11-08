@@ -1,4 +1,4 @@
-use std::{fs::{File, self}, io::{BufReader, BufWriter}};
+use std::{fs::{File, self, OpenOptions}, io::{BufReader, BufWriter, Read}, path::PathBuf};
 
 use serde::{Serialize, Deserialize};
 
@@ -25,16 +25,25 @@ impl Config {
     /// 获取新Config对象
     pub fn new(cli: &Cli, current_line_no: u64) -> Config {
         let cli = cli.clone();
+
         let file_path = cli.file.to_string();
-        Config { cli, file_path: file_path, current_line_no, }
+        let path = PathBuf::from(file_path);
+        let absolute_path = fs::canonicalize(&path).expect("txt文件转化绝对路径失败")
+                                        .into_os_string().into_string().expect("txt文件转化绝对路径失败");
+        Config { cli, file_path: absolute_path, current_line_no, }
     }
 
     /// 更新配置文件, 如果存在配置信息则更新，否则则添加配置信息
-    pub fn update_config(&self, current_line_no: u64) {
+    pub fn update_config(&mut self, current_line_no: u64) {
         let file = get_or_create_config_dir();
-        let reader = BufReader::new(file);
-        let mut content: Vec<Config> = serde_json::from_reader(reader).expect("读取文件内容，反序列化失败");
-
+        let mut reader = BufReader::new(file);
+        let mut contents = String::new();
+        reader.read_to_string(&mut contents).expect("文件读取失败");
+        let mut content : Vec<Config> = Vec::new();
+        if !contents.is_empty() {
+            content = serde_json::from_str(&contents).expect("读取文件内容，反序列化失败");
+        }
+        
         // 默认不存在配置
         let mut exist_config = false;
 
@@ -54,6 +63,7 @@ impl Config {
         
         // 如果不存在，则新增
         if !exist_config {
+            self.current_line_no = current_line_no;
             content.push(self.clone());
         }        
 
@@ -68,23 +78,22 @@ impl Config {
 pub fn get_or_create_config_dir() -> File {
     let mut home_dir = dirs::home_dir().expect("获取配置目录失败");
 
-    // config_dir.push("read/");
+    home_dir.push(".read/");
 
-    // // 如果没有read目录，则创建目录
-    // let metadata = fs::metadata(config_dir.clone());
-    // if metadata.is_err() || metadata.unwrap().is_file() {
-    //     // 如果不存在或者是文件
-    //     File::create(config_dir.clone()).expect("创建read目录失败");
-    // }
+    // 如果没有read目录，则创建目录
+    let metadata = fs::metadata(home_dir.clone());
+    if metadata.is_err() || metadata.unwrap().is_file() {
+        // 如果不存在或者是文件
+        fs::create_dir(home_dir.clone()).expect("创建.read配置目录失败");
+    }
 
     // 获取文件
-    home_dir.push(".read/config.json");
-    let metadata = fs::metadata(home_dir.clone());
-    if metadata.is_ok() && metadata.unwrap().is_file() {
-        // 存在，且是file，直接获取文件句柄
-        return File::open(home_dir).expect("获取配置文件失败")
-    } else {
-        // 创建
-        return File::create(home_dir).expect("创建配置文件失败")
-    }
+    home_dir.push("config.json");
+    OpenOptions::new()
+            .write(true)
+            .create(true)
+            // .truncate(true)
+            .read(true)
+            .open(home_dir)
+            .expect("创建配置文件失败")
 }
