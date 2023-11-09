@@ -19,16 +19,16 @@ pub struct Cli {
     pub start: Option<u64>,
 
     /// 每页显示行数
-    #[arg(short, long, default_value = "1")]
-    pub num: u16,
+    #[arg(short, long)]
+    pub num: Option<u16>,
 
     /// 是否自动阅读
     #[arg(short, long)]
     pub auto: bool,
 
     /// 开启自动阅读时, 每页刷新间隔时间(秒)
-    #[arg(short, long, default_value = "2")]
-    pub time: u64,
+    #[arg(short, long)]
+    pub time: Option<u64>,
 
 
 }
@@ -36,12 +36,6 @@ pub struct Cli {
 /// 读取并验证命令参数
 pub fn read() -> Cli {
     let mut cli = Cli::parse();
-    if cli.num <= 0 {
-        panic!("每页行数不能小于1");
-    }
-    if cli.time <= 0 {
-        panic!("自动阅读刷新时间不能小于1s");
-    }
     if cli.file.is_some() {
 
         let file_path = cli.file.unwrap();

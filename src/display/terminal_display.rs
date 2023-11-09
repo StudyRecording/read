@@ -125,9 +125,9 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     let conf = rc_config.borrow();
 
     // 获取参数
-    let line_num = conf.get_cli().num;
+    let line_num = conf.get_cli().num.unwrap();
     let mut auto = conf.get_cli().auto;
-    let time = conf.get_cli().time;
+    let time = conf.get_cli().time.unwrap();
     // 移除不可变借用，防止在FileRead中使用可变借用
     drop(conf);
 

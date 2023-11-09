@@ -23,7 +23,7 @@ impl Config {
 
     /// 获取新Config对象
     pub fn new(cli: &Cli, file_path: Option<String>) -> Config {
-        let cli = cli.clone();
+        let mut cli = cli.clone();
 
 
         // file_path为空，则从配置文件中获取, 并进行参数校验
@@ -48,6 +48,8 @@ impl Config {
             // 查找绝对路径相同的配置
             let conf = content.iter().find(|item| item.file_path == absolute_path);
             if conf.is_none() {
+                // 设置默认值
+                default_cli_set(&mut cli);
                 // 如果未找到，直接创建新conf对象并返回
                 return Config { cli, file_path: absolute_path, current_line_no, };
             } else {
@@ -57,8 +59,7 @@ impl Config {
                     // 仅当用户传入开始行号，才修改当前行号
                     c.current_line_no = current_line_no;
                 }
-                // 更新命令
-                c.cli.auto = cli.auto;
+                update_cli(&mut c, &cli);
                 return c;
             }
         }
@@ -68,7 +69,7 @@ impl Config {
         if cli.start.is_some() {
             config.current_line_no = cli.start.unwrap();
         }
-
+        update_cli(&mut config, &cli);
         config
     }
 
@@ -120,6 +121,31 @@ impl Config {
     /// 获取命令行参数
     pub fn get_cli(&self) -> &Cli {
         &self.cli
+    }
+}
+
+/// 更新命令
+fn update_cli(c: &mut Config, cli: &Cli) {
+    // 更新命令
+    c.cli.auto = cli.auto;
+
+    // 赋值cli
+    if cli.num.is_some() {
+        c.cli.num = cli.num;
+    }
+    if cli.time.is_some() {
+        c.cli.time = cli.time;
+    }
+}
+
+/// 设置cli的默认值
+fn default_cli_set(cli: &mut Cli) {
+    // 设置每页行数和auto的默认值
+    if cli.num.is_none() {
+        cli.num = Some(1);
+    }
+    if cli.time.is_none() {
+        cli.time = Some(2);
     }
 }
 

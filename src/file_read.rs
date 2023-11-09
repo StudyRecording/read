@@ -47,7 +47,7 @@ impl FileRead {
         let mut ref_conf = conf.borrow_mut();
         let start_line = ref_conf.get_current_no();
         let file_path = ref_conf.get_file_path();
-        let line_num = &ref_conf.get_cli().num;
+        let line_num = &ref_conf.get_cli().num.unwrap();
 
         // 打开文件并读取
         let file = File::open(file_path)
