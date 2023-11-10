@@ -81,31 +81,6 @@ impl Config {
 
     /// 更新配置文件, 如果存在配置信息则更新，否则则添加配置信息
     pub fn update_config(&mut self, current_line_no: u64) {
-        
-        // let mut content = get_config_by_file();
-        
-        // // 默认不存在配置
-        // let mut exist_config = false;
-
-        // // 查找已存在的配置并更新
-        // let mut index = 0;
-        // while index < content.len() {
-        //     let config = content.get(index).expect("获取配置文件内容失败");
-        //     if self.file_path == config.file_path {
-        //         let mut update_config = content.remove(index);
-        //         update_config.current_line_no = current_line_no;
-        //         content.push(update_config);
-        //         exist_config = true;
-        //         break;
-        //     }
-        //     index += 1;
-        // }
-        
-        // // 如果不存在，则新增
-        // if !exist_config {
-        //     self.current_line_no = current_line_no;
-        //     content.push(self.clone());
-        // }        
         let mut all_config: Vec<&Config> = Vec::with_capacity(self.other_config.len() + 1);
         for conf in &self.other_config {
             all_config.push(&conf);
