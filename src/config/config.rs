@@ -17,6 +17,10 @@ pub struct Config {
 
     /// 当前在读行数
     current_line_no: u64,
+
+    /// 其它配置
+    #[serde(skip)]
+    other_config: Vec<Config>,
 }
 
 impl Config {
@@ -46,20 +50,21 @@ impl Config {
             };
 
             // 查找绝对路径相同的配置
-            let conf = content.iter().find(|item| item.file_path == absolute_path);
-            if conf.is_none() {
+            let conf_index = content.iter().position(|item| item.file_path == absolute_path);
+            if conf_index.is_none() {
                 // 设置默认值
                 default_cli_set(&mut cli);
                 // 如果未找到，直接创建新conf对象并返回
-                return Config { cli, file_path: absolute_path, current_line_no, };
+                return Config { cli, file_path: absolute_path, current_line_no, other_config: content};
             } else {
                 // 找到conf配置类
-                let mut c = conf.unwrap().clone();
+                let mut c = content.remove(conf_index.unwrap());
                 if cli_start {
                     // 仅当用户传入开始行号，才修改当前行号
                     c.current_line_no = current_line_no;
                 }
                 update_cli(&mut c, &cli);
+                c.other_config = content;
                 return c;
             }
         }
@@ -70,42 +75,50 @@ impl Config {
             config.current_line_no = cli.start.unwrap();
         }
         update_cli(&mut config, &cli);
+        config.other_config = content;
         config
     }
 
     /// 更新配置文件, 如果存在配置信息则更新，否则则添加配置信息
     pub fn update_config(&mut self, current_line_no: u64) {
         
-        let mut content = get_config_by_file();
+        // let mut content = get_config_by_file();
         
-        // 默认不存在配置
-        let mut exist_config = false;
+        // // 默认不存在配置
+        // let mut exist_config = false;
 
-        // 查找已存在的配置并更新
-        let mut index = 0;
-        while index < content.len() {
-            let config = content.get(index).expect("获取配置文件内容失败");
-            if self.file_path == config.file_path {
-                let mut update_config = content.remove(index);
-                update_config.current_line_no = current_line_no;
-                content.push(update_config);
-                exist_config = true;
-                break;
-            }
-            index += 1;
-        }
+        // // 查找已存在的配置并更新
+        // let mut index = 0;
+        // while index < content.len() {
+        //     let config = content.get(index).expect("获取配置文件内容失败");
+        //     if self.file_path == config.file_path {
+        //         let mut update_config = content.remove(index);
+        //         update_config.current_line_no = current_line_no;
+        //         content.push(update_config);
+        //         exist_config = true;
+        //         break;
+        //     }
+        //     index += 1;
+        // }
         
-        // 如果不存在，则新增
-        if !exist_config {
-            self.current_line_no = current_line_no;
-            content.push(self.clone());
-        }        
+        // // 如果不存在，则新增
+        // if !exist_config {
+        //     self.current_line_no = current_line_no;
+        //     content.push(self.clone());
+        // }        
+        let mut all_config: Vec<&Config> = Vec::with_capacity(self.other_config.len() + 1);
+        for conf in &self.other_config {
+            all_config.push(&conf);
+        }
+
+        self.current_line_no = current_line_no;
+        all_config.push(&self);
 
         // 序列化到文件中
         let file = get_or_create_config_dir(false);
         let writer = BufWriter::new(file);
         
-        serde_json::to_writer(writer, &content).expect("写入配置文件内容失败");
+        serde_json::to_writer(writer, &all_config).expect("写入配置文件内容失败");
     }
 
     /// 获取文件路径
