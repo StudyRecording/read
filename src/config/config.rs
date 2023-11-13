@@ -2,11 +2,12 @@ use std::{fs::{File, self, OpenOptions}, io::{BufReader, BufWriter, Read}};
 
 use serde::{Serialize, Deserialize};
 
+
 use crate::input::cli::Cli;
 
 
 /// 配置
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
 
     /// 命令参数
@@ -54,6 +55,7 @@ impl Config {
             if conf_index.is_none() {
                 // 设置默认值
                 default_cli_set(&mut cli);
+                // info!("获取配置, 第一次加载该txt文件: 路径:{}, 开始行号:{}", absolute_path, current_line_no);
                 // 如果未找到，直接创建新conf对象并返回
                 return Config { cli, file_path: absolute_path, current_line_no, other_config: content};
             } else {
@@ -65,6 +67,7 @@ impl Config {
                 }
                 update_cli(&mut c, &cli);
                 c.other_config = content;
+                // info!("匹配配置信息: 路径:{}, 开始行号:{}", c.file_path, current_line_no);
                 return c;
             }
         }
@@ -76,6 +79,7 @@ impl Config {
         }
         update_cli(&mut config, &cli);
         config.other_config = content;
+        // info!("获取历史配置: 路径:{}, 开始行号:{}", config.file_path, config.current_line_no);
         config
     }
 
@@ -87,6 +91,7 @@ impl Config {
         }
 
         self.current_line_no = current_line_no;
+        // info!("更新配置信息: 路径: {}, 行号: {}", self.file_path, current_line_no);
         all_config.push(&self);
 
         // 序列化到文件中

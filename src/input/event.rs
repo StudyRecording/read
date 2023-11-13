@@ -3,6 +3,7 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 use crossterm::event::{Event, KeyCode, poll, read};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use tracing::info;
 use crate::input::event;
 
 /// 键盘事件读取
@@ -119,6 +120,7 @@ pub fn keys_listener(tx: Sender<KeyEvent>, show_thread: JoinHandle<()>) {
             continue;
         }
         // println!("监听按键:{:?}", ke);
+        info!("按键监听: {:?}", ke);
         if !show_thread.is_finished() {
             tx.send(ke.clone()).expect("发送键盘监听事件失败");
         }

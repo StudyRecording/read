@@ -8,6 +8,7 @@ use crossterm::cursor::{MoveTo, MoveToColumn, MoveUp};
 use crossterm::{ExecutableCommand, execute};
 use crossterm::style::{Color, Print, SetBackgroundColor};
 use crossterm::terminal::{Clear, ClearType, size};
+use tracing::info;
 use crate::config::config::Config;
 use crate::file_read::FileRead;
 use crate::input::cli::Cli;
@@ -121,6 +122,7 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     let file_path = &args.file;
     // 初始化配置
     let config = Config::new(&args, file_path.clone());
+    info!("获取配置: 路径: {}, 行号: {}, 命令行: {:?}", config.get_file_path(), config.get_current_no(), config.get_cli());
     let rc_config = Rc::new(RefCell::new(config));
     let conf = rc_config.borrow();
 
@@ -149,6 +151,8 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     // 不是最后一页就一直循环
     while !fr.is_end() {
         
+        info!("当前显示文件页码: {}", fr.get_current_no());
+
         // 获取当前页并打印
         let write_rows = write_page(&mut out, fr.get_current_page(), &width);
 
@@ -162,6 +166,7 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
 
         // 获取按键事件
         let key = get_key(&auto, &rx);
+        info!("按键监听, 获取按键信息: {:?}", key);
         // 匹配到有效键，则直接跳出监听循环
         match key {
             KeyEvent::NextPage => { fr.next_page(&line_num) }
@@ -179,6 +184,7 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     }
 
     write_line(&mut out, "end......".to_string(), Color::Reset);
+    info!("end......");
 }
 
 /// 自动阅读睡眠时间

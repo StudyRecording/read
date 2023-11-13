@@ -200,4 +200,9 @@ impl FileRead {
     pub fn get_current_page(&self) -> Rc<RefCell<Vec<String>>> {
         self.current_page.clone()
     }
+
+    /// 获取文件页码
+    pub fn get_current_no(&self) -> u64 {
+        self.current_line_no
+    }
 }
