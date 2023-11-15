@@ -4,7 +4,7 @@ use std::rc::Rc;
 use std::sync::mpsc::Receiver;
 use std::thread::sleep;
 use std::time::Duration;
-use crossterm::cursor::{MoveTo, MoveToColumn, MoveUp};
+use crossterm::cursor::{MoveTo, MoveToColumn, MoveUp, self};
 use crossterm::{ExecutableCommand, execute};
 use crossterm::style::{Color, Print, SetBackgroundColor};
 use crossterm::terminal::{Clear, ClearType, size};
@@ -136,10 +136,13 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     // 获取输出流
     let out = stdout();
     let mut out = BufWriter::new(out);
+    let (_, start_y) = cursor::position().expect("获取光标位置失败");
     let msg = String::from("操作按键:【n | ↓】下一页  【p | ↑】上一页  【a】自动翻页 【s】停止自动翻页 【Esc | e】退出程序, Tips: ");
     write(&mut out, msg, Color::Reset);
     let (x, y) = crossterm::cursor::position().expect("获取点位失败");
     write_tip(&mut out, x, y,"hpc制作!!!".to_string(), Color::Red);
+    let (_, end_y) = cursor::position().expect("获取光标位置失败");
+    let tip_rows = end_y - start_y;
 
 
     // 初始化FileRead
@@ -174,6 +177,8 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
             KeyEvent::AutoRead => { auto = true }
             KeyEvent::StopAuto => { auto = false }
             KeyEvent::ESC => {
+                // 清屏
+                clear_page(&mut out, write_rows);
                 break;
             }
             KeyEvent::Other => {}
@@ -183,8 +188,9 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
         clear_page(&mut out, write_rows);
     }
 
-    write_line(&mut out, "end......".to_string(), Color::Reset);
+    // write_line(&mut out, "end......".to_string(), Color::Reset);
     info!("end......");
+    clear_page(&mut out, tip_rows);
 }
 
 /// 自动阅读睡眠时间
