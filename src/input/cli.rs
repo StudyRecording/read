@@ -52,7 +52,7 @@ pub fn read() -> Cli {
         let path = PathBuf::from(file_path);
         let absolute_path = fs::canonicalize(&path).expect("txt文件转化绝对路径失败")
                                         .into_os_string().into_string().expect("txt文件转化绝对路径失败");
-        cli.file = Option::Some(absolute_path);
+        cli.file = Some(absolute_path);
         
     }
 

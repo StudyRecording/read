@@ -52,12 +52,12 @@ impl Config {
 
             // 查找绝对路径相同的配置
             let conf_index = content.iter().position(|item| item.file_path == absolute_path);
-            if conf_index.is_none() {
+            return if conf_index.is_none() {
                 // 设置默认值
                 default_cli_set(&mut cli);
                 // info!("获取配置, 第一次加载该txt文件: 路径:{}, 开始行号:{}", absolute_path, current_line_no);
                 // 如果未找到，直接创建新conf对象并返回
-                return Config { cli, file_path: absolute_path, current_line_no, other_config: content};
+                Config { cli, file_path: absolute_path, current_line_no, other_config: content }
             } else {
                 // 找到conf配置类
                 let mut c = content.remove(conf_index.unwrap());
@@ -68,7 +68,7 @@ impl Config {
                 update_cli(&mut c, &cli);
                 c.other_config = content;
                 // info!("匹配配置信息: 路径:{}, 开始行号:{}", c.file_path, current_line_no);
-                return c;
+                c
             }
         }
         

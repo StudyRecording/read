@@ -4,7 +4,7 @@ use std::time::Duration;
 use crossterm::event::{Event, KeyCode, poll, read};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tracing::info;
-use crate::input::event;
+// use crate::input::event;
 
 /// 键盘事件读取
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -31,10 +31,7 @@ pub enum KeyEvent {
 /// 读取按键事件
 pub fn read_event() -> KeyEvent {
     // 在500ms内获取输入，成功则为true，未获取则为false
-    let poll = match poll(Duration::from_millis(500)) {
-        Ok(status) => status,
-        Err(_) => false,
-    };
+    let poll = poll(Duration::from_millis(500)).unwrap_or_else(|_| false);
     if poll {
         return get_key_event()
     }
@@ -44,10 +41,7 @@ pub fn read_event() -> KeyEvent {
 /// 实际获取键盘事件并转换为本地功能按键事件枚举
 fn get_key_event() -> KeyEvent {
     // 获取事件
-    let event_key = match read() {
-        Ok(key) => key,
-        Err(_) => Event::FocusGained,
-    };
+    let event_key = read().unwrap_or_else(|_| Event::FocusGained);
     // 匹配事件
     match_event_key(event_key)
 }
@@ -114,7 +108,7 @@ pub fn keys_listener(tx: Sender<KeyEvent>, show_thread: JoinHandle<()>) {
         if show_thread.is_finished() {
             break;
         }
-        let ke = event::read_event();
+        let ke = read_event();
         if ke == KeyEvent::Other {
             // 如果是该事件，则是无效按键，继续循环监听其他按键
             continue;

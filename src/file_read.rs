@@ -82,7 +82,7 @@ impl FileRead {
 
             // 保存当前页数据
             let line = content.get(index as usize).map_or("", |l| l);
-            page_content.push(line.clone().parse().unwrap());
+            page_content.push(line.parse().unwrap());
 
             // 修改当前行码
             current_line_no = index + 1;
@@ -135,7 +135,7 @@ impl FileRead {
         for index in start_index..end_index {
             // 保存数据到页面容器中
             let line = self.content.get(index as usize).map_or("", |l| l);
-            page_content.push(line.clone().parse().unwrap());
+            page_content.push(line.parse().unwrap());
 
             // 更新当前行
             self.current_line_no = index + 1;
@@ -180,7 +180,7 @@ impl FileRead {
         for index in start_index..end_index {
             // 填充内容
             let line = self.content.get(index as usize).map_or("", |l| l);
-            page_content.push(line.clone().parse().unwrap());
+            page_content.push(line.parse().unwrap());
 
             // 修改当前行
             self.current_line_no = index + 1;

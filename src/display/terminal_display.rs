@@ -139,7 +139,7 @@ pub fn display(args: Cli, rx: Receiver<KeyEvent>) {
     let (_, start_y) = cursor::position().expect("获取光标位置失败");
     let msg = String::from("操作按键:【n | ↓】下一页  【p | ↑】上一页  【a】自动翻页 【s】停止自动翻页 【Esc | e】退出程序, Tips: ");
     write(&mut out, msg, Color::Reset);
-    let (x, y) = crossterm::cursor::position().expect("获取点位失败");
+    let (x, y) = cursor::position().expect("获取点位失败");
     write_tip(&mut out, x, y,"hpc制作!!!".to_string(), Color::Red);
     let (_, end_y) = cursor::position().expect("获取光标位置失败");
     let tip_rows = end_y - start_y;
@@ -203,14 +203,8 @@ fn auto_read_sleep(auto: &bool, time: &u64) {
 fn get_key(auto: &bool, rx: &Receiver<KeyEvent>) -> KeyEvent {
     // 按键监听获取
     if *auto {
-        match rx.try_recv() {
-            Ok(k) => k,
-            Err(_) => KeyEvent::Other,
-        }
+        rx.try_recv().unwrap_or_else(|_| KeyEvent::Other)
     } else {
-        match rx.recv() {
-            Ok(k) => k,
-            Err(_) => KeyEvent::Other,
-        }
+        rx.recv().unwrap_or_else(|_| KeyEvent::Other)
     }
 }
